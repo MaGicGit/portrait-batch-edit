@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "portrait-edit"
+version = "0.2.0"
+description = "Deterministic helpers for Codex + Lightroom Classic portrait editing"
+requires-python = ">=3.10"
+dependencies = ["Pillow>=10.0.0", "jsonschema>=4.18"]
+
+[project.optional-dependencies]
+test = ["lupa>=2.0"]
+
+[project.scripts]
+portrait-edit = "portrait_edit.cli:main"
+
+[tool.setuptools]
+packages = ["portrait_edit"]
+
+[tool.setuptools.package-data]
+portrait_edit = ["*.json"]

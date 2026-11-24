@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-11-24",
+  "global_style_summary": "Scene-aware natural outdoor portrait color. Preserve skin texture and natural ambient light.",
+  "style_groups": [
+    {
+      "id": "open-shade-01",
+      "style_name": "Open shade — neutral natural",
+      "lighting": "open shade",
+      "rationale": "Cool ambient cast; keep skin neutral and lift shadows gently."
+    }
+  ],
+  "photos": [
+    {
+      "source_path": "D:/Photos/Shoot01/DSC00001.ARW",
+      "preview_path": "D:/LrAI/Shoot01/previews/photo_00001.jpg",
+      "style_group": "open-shade-01",
+      "score": 92,
+      "confidence": 0.88,
+      "preview": true,
+      "global_settings": {
+        "Exposure2012": 0.2,
+        "Contrast2012": 6,
+        "Highlights2012": -25,
+        "Shadows2012": 18,
+        "Whites2012": 5,
+        "Blacks2012": -8,
+        "Temperature": 5400,
+        "Tint": 5,
+        "Texture": 2,
+        "Clarity2012": 1,
+        "Vibrance": 8,
+        "Saturation": -2,
+        "SaturationAdjustmentOrange": -4,
+        "LuminanceAdjustmentOrange": 5,
+        "SaturationAdjustmentGreen": -12
+      },
+      "local_adjustments": [
+        {
+          "target": "facial_skin",
+          "status": "proposed_not_applied",
+          "instruction": "If a People > Facial Skin mask is available, reduce Texture slightly (about -5) while preserving pores; do not blur.",
+          "settings": {
+            "Texture": -5,
+            "Clarity": -2
+          }
+        },
+        {
+          "target": "iris_pupil",
+          "status": "proposed_not_applied",
+          "instruction": "Optional subtle Iris and Pupil mask: tiny exposure lift and restrained texture; avoid whitening the sclera.",
+          "settings": {
+            "Exposure": 0.08,
+            "Texture": 5
+          }
+        },
+        {
+          "target": "hair",
+          "status": "proposed_not_applied",
+          "instruction": "Optional Hair mask: recover shadow detail gently without halos.",
+          "settings": {
+            "Shadows": 8,
+            "Texture": 5
+          }
+        },
+        {
+          "target": "background",
+          "status": "proposed_not_applied",
+          "instruction": "Optional Background mask: lower exposure slightly only if it competes with the subject.",
+          "settings": {
+            "Exposure": -0.15,
+            "Saturation": -5
+          }
+        }
+      ],
+      "notes": "Example only. Reassess all values against the actual preview."
+    }
+  ]
+}

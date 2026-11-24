@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "settings": {
+    "Exposure2012": {
+      "min": -1.0,
+      "max": 1.0
+    },
+    "Contrast2012": {
+      "min": -30,
+      "max": 30
+    },
+    "Highlights2012": {
+      "min": -60,
+      "max": 40
+    },
+    "Shadows2012": {
+      "min": -20,
+      "max": 60
+    },
+    "Whites2012": {
+      "min": -30,
+      "max": 30
+    },
+    "Blacks2012": {
+      "min": -30,
+      "max": 30
+    },
+    "Temperature": {
+      "min": 2000,
+      "max": 50000
+    },
+    "Tint": {
+      "min": -50,
+      "max": 50
+    },
+    "Texture": {
+      "min": -20,
+      "max": 20
+    },
+    "Clarity2012": {
+      "min": -15,
+      "max": 15
+    },
+    "Dehaze": {
+      "min": -10,
+      "max": 10
+    },
+    "Vibrance": {
+      "min": -20,
+      "max": 25
+    },
+    "Saturation": {
+      "min": -15,
+      "max": 15
+    },
+    "HueAdjustmentOrange": {
+      "min": -10,
+      "max": 10
+    },
+    "SaturationAdjustmentOrange": {
+      "min": -15,
+      "max": 10
+    },
+    "LuminanceAdjustmentOrange": {
+      "min": -10,
+      "max": 15
+    },
+    "HueAdjustmentYellow": {
+      "min": -15,
+      "max": 15
+    },
+    "SaturationAdjustmentYellow": {
+      "min": -30,
+      "max": 10
+    },
+    "HueAdjustmentGreen": {
+      "min": -30,
+      "max": 30
+    },
+    "SaturationAdjustmentGreen": {
+      "min": -35,
+      "max": 10
+    },
+    "LuminanceAdjustmentGreen": {
+      "min": -20,
+      "max": 20
+    },
+    "Sharpness": {
+      "min": 0,
+      "max": 80
+    },
+    "SharpenRadius": {
+      "min": 0.5,
+      "max": 2.0
+    },
+    "SharpenDetail": {
+      "min": 0,
+      "max": 50
+    },
+    "SharpenEdgeMasking": {
+      "min": 0,
+      "max": 90
+    },
+    "LuminanceSmoothing": {
+      "min": 0,
+      "max": 50
+    },
+    "ColorNoiseReduction": {
+      "min": 0,
+      "max": 50
+    },
+    "IncrementalTemperature": {
+      "min": -15,
+      "max": 15
+    },
+    "IncrementalTint": {
+      "min": -15,
+      "max": 15
+    },
+    "ParametricShadows": {
+      "min": -15,
+      "max": 15
+    },
+    "ParametricDarks": {
+      "min": -15,
+      "max": 15
+    },
+    "ParametricLights": {
+      "min": -15,
+      "max": 15
+    },
+    "ParametricHighlights": {
+      "min": -15,
+      "max": 15
+    }
+  },
+  "notes": [
+    "Values are absolute Lightroom slider positions. Omitted sliders inherit their source settings.",
+    "Conservative project bounds. Clamping is recorded in the review report."
+  ]
+}
