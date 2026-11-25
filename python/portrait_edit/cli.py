@@ -4,6 +4,7 @@ import argparse
 
 from .scanner import scan_folder, scan_lightroom_manifest
 from .contact_sheets import make_contact_sheets
+from .lightroom_export import export_lightroom
 from .plan import validate_and_export
 from .report import write_report
 
@@ -19,6 +20,10 @@ def main() -> None:
     p_lr = sub.add_parser("scan-lightroom", help="Convert Lightroom plugin export manifest to project manifest")
     p_lr.add_argument("--manifest", required=True)
     p_lr.add_argument("--workdir", required=True)
+
+    p_export = sub.add_parser("export-lightroom", help="Request and wait for previews from Lightroom Classic")
+    p_export.add_argument("--source-folder", help="Imported folder including its subfolders (default: current selection)")
+    p_export.add_argument("--workdir", help="New or empty output folder (default: a new numbered session)")
 
     p_sheets = sub.add_parser("sheets", help="Create contact sheets from a manifest")
     p_sheets.add_argument("--manifest", required=True)
@@ -40,6 +45,11 @@ def main() -> None:
         print(scan_folder(args.input, args.workdir))
     elif args.command == "scan-lightroom":
         print(scan_lightroom_manifest(args.manifest, args.workdir))
+    elif args.command == "export-lightroom":
+        try:
+            print(export_lightroom(args.workdir, args.source_folder))
+        except (OSError, ValueError, RuntimeError) as exc:
+            parser.exit(1, f"{exc}\n")
     elif args.command == "sheets":
         for path in make_contact_sheets(args.manifest, args.out, args.batch_size, args.columns):
             print(path)

@@ -8,7 +8,7 @@ local function newPhoto(id, path, master, name)
     if master then p.settings = clone(master.settings) end
     function p:getRawMetadata(key)
         local fields = {uuid=self.uuid, path=self.path, isVirtualCopy=self.master ~= nil, masterPhoto=self.master,
-                        virtualCopies=self.copies, fileFormat="RAW", width=20, height=40, isVideo=false}
+                        virtualCopies=self.copies, fileFormat="RAW", width=20, height=40, isVideo=self.video or false}
         return fields[key]
     end
     function p:getFormattedMetadata(key) assert(key == "copyName"); return self.name end
@@ -26,7 +26,19 @@ local function newPhoto(id, path, master, name)
 end
 function catalog:getPath() return "test.lrcat" end
 function catalog:getTargetPhoto() return selected[1] end
-function catalog:getTargetPhotos() return selected end
+function catalog:getTargetPhotos() return #selected > 0 and selected or sources end
+function catalog:getFolderByPath(path)
+    if path ~= sourceFolder then return nil end
+    return {getPhotos=function(_, includeChildren)
+        assert(includeChildren)
+        local photos = {}
+        for _, photo in ipairs(sources) do
+            table.insert(photos, photo)
+            for _, copy in ipairs(photo.copies) do table.insert(photos, copy) end
+        end
+        return photos
+    end}
+end
 function catalog:setSelectedPhotos(photo, others)
     selected={photo}; for _, p in ipairs(others) do table.insert(selected,p) end
 end
@@ -56,10 +68,12 @@ modules.LrMD5 = {digest=md5}
 modules.LrTasks = {pcall=pcall}
 modules.LrFunctionContext = {postAsyncTaskWithContext=function(t,fn) fn({}) end,
                              callWithContext=function(t,fn) fn({}) end}
-modules.LrPathUtils = {leafName=leaf, parent=parent, child=child}
-modules.LrFileUtils = {exists=exists, readFile=read, createAllDirectories=mkdir, move=move}
+modules.LrPathUtils = {leafName=leaf, parent=parent, child=child, isAbsolute=isAbsolute,
+                       getStandardFilePath=function(key) return assert(({home=requestHome, temp=tempDir})[key]) end}
+modules.LrFileUtils = {exists=exists, readFile=read, createAllDirectories=mkdir, move=move,
+                       chooseUniqueFileName=function(path) assert(not exists(path)); return path end}
 modules.LrDate = {currentTime=os.time}
-modules.LrDialogs = {runOpenPanel=function() return {chosenPath} end,
+modules.LrDialogs = {runOpenPanel=function() panelCount=(panelCount or 0)+1; return {chosenPath} end,
                      showError=function(msg) lastError=msg end,
                      message=function(title, msg) lastMessage=msg end,
                      showModalProgressDialog=function() return progress end,

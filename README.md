@@ -12,22 +12,25 @@
 
 ## 开始使用
 
-1. 获取项目，并在仓库根目录安装 Python 工具。如果已下载或克隆仓库，可直接从创建虚拟环境开始。
+1. 首次使用时，在仓库根目录安装 Python 工具和 Lightroom 插件。如果已下载或克隆仓库，可直接从创建虚拟环境开始。
 
    ```powershell
    git clone https://github.com/MaGicGit/portrait-batch-edit.git
    cd portrait-batch-edit
    py -3 -m venv .venv
    .\.venv\Scripts\python.exe -m pip install -e .\python
+   .\scripts\install-lightroom-plugin.ps1
    ```
 
-2. 在 Lightroom Classic 的「文件 → 增效工具管理器 → 添加」选择插件目录。在图库中选中原片，运行 `Portrait Batch Edit - Export Selected Previews`，为这批照片选择一个新目录，例如 `D:\LrAI\session-001`。Windows 上建议用英文导出目录，原片可以使用中文名称。[Lightroom 插件目录](lightroom-plugin/PortraitBatchEdit.lrplugin/)
-3. 在项目内打开 Codex，把下面的目录替换成刚导出的目录。项目已包含同名 Skill。需要在其他项目调用时可运行 `.\scripts\install-skill.ps1`。
+2. 在 Lightroom Classic 打开这批照片所在的目录。要处理其中几张，就在图库中选中原片。要处理整个已导入的文件夹，直接在提示词里写它的路径即可。安装脚本把插件复制到 Lightroom 的 Modules 目录。如果安装或更新时 Lightroom 已打开，可以在增效工具管理器中重新载入插件，或重启一次。
+3. 在项目内打开 Codex，输入下面的提示词。Codex 会让 Lightroom 导出预览，等清单写完后继续看图。项目已包含同名 Skill，需要在其他项目调用时可运行 `.\scripts\install-skill.ps1`。
 
    ```text
-   $portrait-batch-edit 处理 D:\LrAI\session-001。按场景分组，让每组有自己的风格。
+   $portrait-batch-edit 处理 Lightroom 当前选中的原片。按场景分组，让每组有自己的风格。
    逐张检查肤色、眼睛、头发和背景，生成方案、代表照预览清单和中文审阅报告。
    ```
+
+   按文件夹处理时，可把第一句换成「处理 Lightroom 已导入的原片目录 `D:\照片\秋日人像`，包含子目录」。默认工作目录为 `%USERPROFILE%\PortraitBatchEdit\jobs\session-001`，每批自动取下一个可用编号。也可以在提示词中写「工作目录用 `D:\LrAI\session-001`」。给出已有的 Lightroom 导出清单时会直接从该批次继续。
 
 4. 打开 `output\report.html` 审阅分组与参数。在 Lightroom 运行 `Portrait Batch Edit - Apply Plan to Virtual Copies`，选择 `output\preview-plan.csv` 并确认。每组会生成一张名为 `AI Retouch …` 的代表照虚拟副本。在「修改照片」中与原片对照，特别检查肤色、高光和背景。
 5. 满意后运行同一个菜单，选择同一目录的 `apply-plan.csv`，点击「确认并批量应用」。代表照计入最终数量，只为其余照片续做副本。要修改风格时，让 Codex 更新 JSON 再次运行校验，新版方案需要重新预览。
@@ -47,6 +50,8 @@
 
 ## 单独运行 Python
 
+若要从 Lightroom 当前选区新建一批，可运行 `.\.venv\Scripts\python.exe -m portrait_edit.cli export-lightroom`。命令成功时输出完整清单路径。可选参数 `--source-folder` 指定 Lightroom 已导入的原片目录，`--workdir` 指定新的或空的工作目录。已有预览也可以从扫描命令开始。
+
 ```powershell
 $job = 'D:\LrAI\session-001'
 $pythonBin = '.\.venv\Scripts\python.exe'
@@ -62,6 +67,7 @@ $pythonBin = '.\.venv\Scripts\python.exe'
 
 | 遇到的情况 | 处理方式 |
 | --- | --- |
+| 自动导出提示未收到请求 | 在 Lightroom Classic「文件 → 增效工具管理器」确认 Portrait Batch Edit 已启用，首次安装或更新后重新载入插件或重启 Lightroom。也可用插件菜单 `Export Selected Previews` 导出到新目录，再把目录交给 Codex。 |
 | 打开批量 CSV 后提示先生成代表照 | 在同一目录选择 `preview-plan.csv`，确认创建并查看各组代表照，再打开 `apply-plan.csv`。 |
 | 预览后修改过原片或代表照 | 原片显影已变更时，重新导出预览。若要沿用手调代表照的风格，将调整写回 JSON，运行 `validate` 并重新预览。 |
 | 批量应用中断 | 修复提示的问题后，重新打开同一份 CSV。插件通过原片和已完成副本的身份记录续做。 |

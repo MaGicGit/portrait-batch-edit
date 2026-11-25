@@ -1,12 +1,10 @@
 # Codex usage
 
-Open the repository root in Codex. Invoke:
+Open the relevant catalog in Lightroom Classic and the repository root in Codex. For a selection, use this prompt.
 
-`$portrait-batch-edit`
+> $portrait-batch-edit 处理 Lightroom 当前选中的原片。按光线分组，逐张查看肤色、眼睛、头发和背景，生成方案、代表照预览清单和中文报告。
 
-Example request:
-
-> Process `D:\LrAI\session-001`. Inspect the contact sheets, infer a distinct style for each lighting group, inspect full previews of representative photos, and write `ai-edit-plan.json`. Do not apply anything to Lightroom yet.
+For an imported folder, replace the selection with its full path, for example “处理 Lightroom 已导入的原片目录 D:\照片\秋日人像，包含子目录”. The skill requests the previews, allocates a numbered job directory and waits for the manifest before scanning. To choose the destination, add “工作目录用 D:\LrAI\session-001”. To resume an existing export, give Codex the directory containing its `lightroom-manifest.csv`.
 
 After review:
 

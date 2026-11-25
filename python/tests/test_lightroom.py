@@ -1,11 +1,15 @@
+import csv
 import hashlib
 import io
 import json
 import tempfile
 import unittest
+from itertools import count
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image
+from portrait_edit.lightroom_export import export_lightroom
 from portrait_edit.plan import BOUNDS, validate_and_export
 from portrait_edit.scanner import scan_lightroom_manifest
 
@@ -30,11 +34,22 @@ class LightroomWorkflow(unittest.TestCase):
         self.g.leaf = lambda p: Path(p).name
         self.g.parent = lambda p: str(Path(p).parent)
         self.g.child = lambda a, b: str(Path(a) / b)
+        self.g.isAbsolute = lambda p: Path(p).is_absolute()
         self.g.read = lambda p: Path(p).read_bytes().decode("utf-8")
         self.g.exists = lambda p: Path(p).exists()
-        self.g.mkdir = lambda p: Path(p).mkdir(parents=True, exist_ok=True)
+        def mkdir(p):
+            try:
+                Path(p).mkdir(parents=True)
+            except FileExistsError:
+                return True, False
+            return True, True
+
+        self.g.mkdir = mkdir
         self.g.move = lambda a, b: bool(Path(a).rename(b))
-        self.g.sourcePath = lambda i: str(self.job / str(i) / "同名,人像.ARW")
+        self.g.tempDir = str(self.job)
+        self.g.requestHome = str(self.job / "测试用户")
+        self.g.sourceFolder = str(self.job / "中文, 原片")
+        self.g.sourcePath = lambda i: str(Path(self.g.sourceFolder) / str(i) / "同名,人像.ARW")
         jpg = io.BytesIO()
         Image.new("RGB", (20, 40)).save(jpg, format="JPEG")
         self.g.jpegBytes = jpg.getvalue()
@@ -68,6 +83,86 @@ class LightroomWorkflow(unittest.TestCase):
 
     def counts(self):
         return [self.g.copyCount(i) for i in range(1, 4)]
+
+    def request_export(self, **kwargs):
+        info = self.lua.execute((PLUGIN / "Info.lua").read_text("utf-8"))
+        handler = self.lua.execute((PLUGIN / info.URLHandler).read_text("utf-8")).URLHandler
+
+        def deliver(url):
+            self.assertTrue(url.startswith(f"lightroom://{info.LrToolkitIdentifier}/export/"))
+            handler(url)
+            handler(url)  # A duplicate delivery must not export a second time.
+            self.assertIsNone(self.g.lastError)
+
+        with patch.object(Path, "home", return_value=Path(self.g.requestHome)), \
+             patch("portrait_edit.lightroom_export._open_lightroom", side_effect=deliver):
+            return export_lightroom(**kwargs)
+
+    def test_prompt_exports_selection_without_dialogs_then_catalog_folder(self):
+        self.lua.execute('c=import("LrApplication").activeCatalog(); c:setSelectedPhotos(c:findPhotoByUuid("id-2"), {})')
+        panels = self.g.panelCount
+        self.g.lastMessage = None
+        manifest = self.request_export()
+        self.assertEqual(manifest.parent.name, "session-001")
+        with manifest.open(encoding="utf-8", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertEqual([r["source_path"] for r in rows], [self.g.sourcePath(2)])
+        self.assertTrue(Path(rows[0]["preview_path"]).is_file())
+        self.assertEqual(self.counts(), [0, 0, 0])
+        self.assertEqual(self.g.panelCount, panels)
+        self.assertIsNone(self.g.lastMessage)
+
+        self.lua.execute('c:createVirtualCopies("fixture"); c:findPhotoByUuid("id-3").video=true')
+        manifest = self.request_export(source_folder=self.g.sourceFolder)
+        self.assertEqual(manifest.parent.name, "session-002")
+        with manifest.open(encoding="utf-8", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertEqual([r["source_path"] for r in rows], [self.g.sourcePath(1), self.g.sourcePath(2)])
+        self.assertEqual(self.counts(), [0, 1, 0])
+
+    def test_prompt_reports_empty_selection_missing_folder_and_cancel(self):
+        self.lua.execute('c=import("LrApplication").activeCatalog(); c:setSelectedPhotos(nil, {})')
+        out = self.job / "空的 工作目录"
+        out.mkdir()
+        with self.assertRaisesRegex(RuntimeError, "图库选中原片"):
+            self.request_export(workdir=out)
+        self.assertEqual(list(out.iterdir()), [])
+        self.lua.execute('c:setSelectedPhotos(c:findPhotoByUuid("id-1"), {})')
+        with self.assertRaisesRegex(RuntimeError, "未收录"):
+            self.request_export(workdir=out, source_folder=self.job / "unknown")
+        self.g.cancelProgress = True
+        with self.assertRaisesRegex(RuntimeError, "已取消"):
+            self.request_export(workdir=out)
+        self.assertFalse((out / "lightroom-manifest.csv").exists())
+        with self.assertRaisesRegex(FileExistsError, "工作目录已有文件"):
+            self.request_export(workdir=out)
+        self.assertEqual(self.counts(), [0, 0, 0])
+
+    def test_unclaimed_request_expires_and_stalled_export_is_not_accepted(self):
+        job = self.job / "pending-job"
+        with patch.object(Path, "home", return_value=Path(self.g.requestHome)), \
+             patch("portrait_edit.lightroom_export.time.sleep"), \
+             patch("portrait_edit.lightroom_export.time.monotonic", side_effect=count(0, 15)), \
+             patch("portrait_edit.lightroom_export._open_lightroom") as dispatch:
+            with self.assertRaisesRegex(TimeoutError, "未接收"):
+                export_lightroom(workdir=job)
+            self.assertGreater(dispatch.call_count, 1)
+            self.assertEqual(len({call.args[0] for call in dispatch.call_args_list}), 1)
+            info = self.lua.execute((PLUGIN / "Info.lua").read_text("utf-8"))
+            handler = self.lua.execute((PLUGIN / info.URLHandler).read_text("utf-8")).URLHandler
+            handler(dispatch.call_args.args[0])  # A late URL cannot resurrect an expired request.
+            self.assertEqual(list(job.iterdir()), [])
+
+            def stall(url):
+                request = Path(self.g.requestHome) / "PortraitBatchEdit/requests" / url.rsplit("/", 1)[1]
+                (request / "pending.csv").rename(request / "running.csv")
+                (job / "lightroom-manifest.tmp").write_text("partial", encoding="utf-8")
+
+            dispatch.side_effect = stall
+            with self.assertRaisesRegex(TimeoutError, "已接收请求"):
+                export_lightroom(workdir=job)
+            self.assertTrue((job / "lightroom-manifest.tmp").is_file())
+            self.assertFalse((job / "lightroom-manifest.csv").exists())
 
     def test_preview_approval_retries_and_masters(self):
         self.assertIn("代表照", self.apply("apply"))

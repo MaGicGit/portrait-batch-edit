@@ -1,6 +1,6 @@
 ---
 name: portrait-batch-edit
-description: 在当前 Codex 对话查看本地人像预览，按场景拟定逐张 Lightroom Classic 显影和皮肤、眼睛、头发、背景精修方案，生成代表照预览和经确认后用于虚拟副本的批量计划。
+description: 从提示词自动导出 Lightroom Classic 当前选区或已导入文件夹的人像预览，在当前 Codex 对话逐张看图，生成显影、局部精修和代表照方案，供确认后用于虚拟副本。
 ---
 
 # Lightroom Classic 人像批量修图
@@ -9,15 +9,26 @@ description: 在当前 Codex 对话查看本地人像预览，按场景拟定逐
 
 ## 找到输入与工具
 
-项目内的 Skill 位于 `.agents/skills/portrait-batch-edit`，项目根目录含 `python/portrait_edit`。若通过用户级安装脚本调用，从本 Skill 目录的 `project-path.txt` 读取项目位置。将 `$pythonBin` 设为项目的 `.venv/Scripts/python.exe` 完整路径，`$job` 表示本次独立工作目录。
+项目内的 Skill 位于 `.agents/skills/portrait-batch-edit`，项目根目录含 `python/portrait_edit`。若通过用户级安装脚本调用，从本 Skill 目录的 `project-path.txt` 读取项目位置。将 `$projectRoot` 设为项目根目录，`$pythonBin` 设为项目的 `.venv/Scripts/python.exe` 完整路径，`$job` 表示本次独立工作目录。
 
-- Lightroom 导出目录中有 `lightroom-manifest.csv` 和 `previews`。运行 `& $pythonBin -m portrait_edit.cli scan-lightroom --manifest "$job\lightroom-manifest.csv" --workdir $job`。
-- 本地成片目录使用 `& $pythonBin -m portrait_edit.cli scan --input <照片目录> --workdir $job`。对缺少预览的 RAW，用插件的 `Export Selected Previews` 导出。图像打不开时记录对应照片，请求可读预览。
+- 用户给出已有的 Lightroom 导出目录或清单时，以 `lightroom-manifest.csv` 所在目录作为 `$job`。只有 `previews` 或 `lightroom-manifest.tmp` 的批次属于未完成导出，重试时使用新的工作目录。
+- 用户要求处理 Lightroom 当前选区、已导入的原片目录，或给出一个新的批次工作目录时，在当前对话自动发起导出。先运行 `& "$projectRoot\scripts\install-lightroom-plugin.ps1"` 安装或更新插件。把 `$exportArgs` 初始化为 `@()`。使用选区时直接执行下方命令。指定 Lightroom 原片目录时追加 `$exportArgs += @('--source-folder', $sourceFolder)`，包含子目录中的已导入原片。用户指定输出位置时追加 `$exportArgs += @('--workdir', $job)`。旧示例中新的或空的 `D:\LrAI\session-001` 属于输出位置。省略输出位置会自动分配新目录。
+
+  ```powershell
+  [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+  $lrManifest = & $pythonBin -X utf8 -m portrait_edit.cli export-lightroom @exportArgs
+  if ($LASTEXITCODE -ne 0) { throw 'Lightroom 预览导出未完成，请查看命令返回的原因。' }
+  $job = Split-Path -LiteralPath $lrManifest
+  ```
+
+  等待命令返回本批次完整清单，再继续扫描和看图。若选区为空或原片目录未收录，按返回的原因请用户选片或打开对应的 Lightroom 目录。若插件首次安装或更新后未响应，提示在增效工具管理器启用或重新载入，或重启 Lightroom 一次。用户也可使用手动菜单 `Export Selected Previews` 导出到新目录。
+- 对已取得的 Lightroom 清单运行 `& $pythonBin -m portrait_edit.cli scan-lightroom --manifest "$job\lightroom-manifest.csv" --workdir $job`。
+- 本地成片目录使用 `& $pythonBin -m portrait_edit.cli scan --input <照片目录> --workdir $job`。若 RAW 需要 Lightroom 渲染预览，按其已导入的原片目录请求导出。图像打不开时记录对应照片，请求可读预览。
 - 运行 `& $pythonBin -m portrait_edit.cli sheets --manifest "$job\manifest.json" --out "$job\contact-sheets"`。按 `index.json` 中的格子编号定位完整路径，尤其注意不同子目录中的同名文件。
 
 ## 看图与写方案
 
-打开索引中的每张联系表，按主光方向、光质、环境色和背景分组。读[修图手册的场景与部位索引](references/editing-policy.md)，依画面进入 Varis 或 Kelby 的对应案例。再打开每张照片的预览，比较受光侧与背光侧、脸与颈、人物与背景，决定哪一处最影响这张人像，或哪些特征值得保留。插件请求的 JPEG 最大为 2048 × 2048。若放大后仍看不清毛孔、微血丝或单根发丝，在备注中指出需要用原片 1:1 核对的位置。
+打开索引中的每张联系表，按主光方向、光质、环境色和背景分组。读[修图手册的场景与部位索引](references/editing-policy.md)，依画面进入 Varis 或 Kelby 的对应案例。再打开每张照片的预览，比较受光侧与背光侧、脸与颈、人物与背景，决定哪一处最影响这张人像，或哪些特征值得保留。插件向 Lightroom 请求 2048 × 2048 的 JPEG 预览。若放大后仍看不清毛孔、微血丝或单根发丝，在备注中指出需要用原片 1:1 核对的位置。
 
 在 `$job\ai-edit-plan.json` 写入 v1.0 方案。项目内 `examples/ai-edit-plan.example.json` 有完整样例，`python/portrait_edit/edit-plan.schema.json` 定义结构，`python/portrait_edit/develop-settings.json` 给出支持的滑块及范围。
 

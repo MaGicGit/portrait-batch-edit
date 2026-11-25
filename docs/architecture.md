@@ -1,10 +1,11 @@
 # 工作流与数据边界
 
-Lightroom 导出选中的原片 → Python 生成清单与带编号的联系表 → 当前 Codex 对话看图并编写 JSON → Python 校验并发布两份 CSV → Lightroom 生成每组代表照 → 用户确认 → Lightroom 续做其余虚拟副本。
+Codex 提示词 → Lightroom 导出指定选区或文件夹的原片预览 → Python 生成清单与带编号的联系表 → 当前 Codex 对话看图并编写 JSON → Python 校验并发布两份 CSV → Lightroom 生成每组代表照 → 用户确认 → Lightroom 续做其余虚拟副本。
 
 | 模块 | 职责 |
 | --- | --- |
-| `ExportPreviews.lua` | 请求渲染后的 JPEG，记录原片 UUID、路径、目录标识、显影指纹和支持的滑块读数。全部完成后发布 manifest |
+| `lightroom_export.py`、`ExportRequest.lua` | 通过 Lightroom 的 URLHandler 投递本机请求编号，从临时请求文件读取选片范围和工作目录，向 Codex 返回完成、取消或失败结果 |
+| `PreviewExport.lua` | 自动请求与手动菜单 `ExportPreviews.lua` 共用的导出逻辑。请求渲染后的 JPEG，记录原片 UUID、路径、目录标识、显影指纹和支持的滑块读数。全部完成后发布 manifest |
 | `scanner.py`、`contact_sheets.py` | 解析 Lightroom 或文件夹输入；索引保留每格到源照片的映射 |
 | `plan.py`、`report.py` | 校验 v1.0 JSON、源片覆盖和风格组，限制数值范围，生成报告和同一版本的预览与批量 CSV |
 | `Csv.lua`、`Bounds.lua`、`Develop.lua` | 解析带引号的 CSV，独立检查参数边界，校验实际显影回读。测试检查 Python 与 Lua 的范围一致 |
