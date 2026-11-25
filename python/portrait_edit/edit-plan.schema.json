@@ -110,6 +110,15 @@
                 "instruction": {
                   "type": "string"
                 },
+                "location": {
+                  "type": "string"
+                },
+                "observation": {
+                  "type": "string"
+                },
+                "stop_when": {
+                  "type": "string"
+                },
                 "settings": {
                   "type": "object",
                   "additionalProperties": {

@@ -57,6 +57,66 @@ class WorkflowTests(unittest.TestCase):
         first = files["apply_csv"].read_bytes()
         self.assertEqual(first, self.export()["apply_csv"].read_bytes())
 
+    def test_detailed_review_is_ordered_and_separate_from_develop_settings(self):
+        def read_rows(path):
+            with path.open(encoding="utf-8-sig", newline="") as file:
+                return list(csv.DictReader(file))
+
+        app_files = ("preview_csv", "apply_csv")
+        item = self.data["photos"][0]
+        item["notes"] = "旧版自由备注 <保留>"
+        old = self.export()
+        old_report = old["report"].read_text("utf-8")
+        self.assertIn("旧版自由备注 &lt;保留&gt;", old_report)
+        self.assertNotIn("备注与人工复核", old_report)
+        for heading in ("位置", "观察依据", "停手条件"):
+            self.assertNotIn(f"<dt>{heading}</dt>", old_report)
+        original_app_rows = {key: read_rows(old[key]) for key in app_files}
+
+        item["notes"] = "先保留侧光 <亮边>\nPhotoshop 人工复核 <script>\n比较交付尺寸"
+        hair = item["local_adjustments"][0]
+        hair.update(location='画面左侧,"发梢"', observation="发梢与背景的 <明暗边界>",
+                    stop_when="没有白边 & 仍有层次")
+        item["local_adjustments"].append(dict(target="background", status="proposed_not_applied",
+                                              instruction="保留原有背景层次", settings={}))
+        result = self.export()
+        report = result["report"].read_text("utf-8")
+        expected = ["首要判断", "先保留侧光 &lt;亮边&gt;", "备注与人工复核",
+                    "Photoshop 人工复核 &lt;script&gt;\n比较交付尺寸", "全局显影目标值",
+                    "画面左侧,&quot;发梢&quot;", "发梢与背景的 &lt;明暗边界&gt;", "保留发丝 &lt;test&gt;",
+                    "没有白边 &amp; 仍有层次", "保留原有背景层次"]
+        positions = [report.index(part) for part in expected]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn("<script>", report)
+        rows = read_rows(result["local_adjustments"])
+        self.assertEqual(list(rows[0]), ["source_path", "style_group", "target", "status", "instruction",
+                                        "settings_json", "location", "observation", "stop_when"])
+        self.assertEqual([r["target"] for r in rows], ["hair", "background", "hair", "hair"])
+        for key in ("location", "observation", "stop_when"):
+            self.assertEqual(rows[0][key], hair[key])
+            self.assertEqual(rows[1][key], "")
+        self.assertEqual(json.loads(rows[1]["settings_json"]), {})
+        normalized = json.loads(result["normalized_plan"].read_text("utf-8"))
+        self.assertEqual(normalized["photos"][0]["local_adjustments"], item["local_adjustments"])
+        for key in app_files:
+            updated = read_rows(result[key])
+            original = original_app_rows[key]
+            # The review text participates in the revision hash, but supplies no Lightroom settings.
+            self.assertNotEqual(updated[0]["revision"], original[0]["revision"])
+            for row in updated + original:
+                del row["revision"]
+            self.assertEqual(original, updated)
+            self.assertTrue({"location", "observation", "stop_when", "instruction"}.isdisjoint(updated[0]))
+
+    def test_optional_review_details_must_be_strings(self):
+        local = self.data["photos"][0]["local_adjustments"][0]
+        for key in ("location", "observation", "stop_when"):
+            with self.subTest(field=key):
+                local[key] = 5
+                with self.assertRaisesRegex(ValueError, key):
+                    self.export()
+                del local[key]
+
     def test_invalid_plans_leave_last_good_outputs_intact(self):
         before = self.export()["apply_csv"].read_bytes()
         original = json.dumps(self.data)

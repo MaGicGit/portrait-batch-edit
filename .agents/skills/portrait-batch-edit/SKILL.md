@@ -17,13 +17,14 @@ description: 在当前 Codex 对话查看本地人像预览，按场景拟定逐
 
 ## 看图与写方案
 
-打开本次索引列出的每张联系表，按主光方向、环境色及背景分组。查看每张需要显影判断的原尺寸预览。代表照、混合光、眼部或发丝细节难以看清时单独放大；仍无法判断的项目写入复核备注。需要场景与肤色判断准则时读取本 Skill 的 `references/editing-policy.md`。
+打开索引中的每张联系表，按主光方向、光质、环境色和背景分组。读[修图手册的场景与部位索引](references/editing-policy.md)，依画面进入 Varis 或 Kelby 的对应案例。再打开每张照片的预览，比较受光侧与背光侧、脸与颈、人物与背景，决定哪一处最影响这张人像，或哪些特征值得保留。插件请求的 JPEG 最大为 2048 × 2048。若放大后仍看不清毛孔、微血丝或单根发丝，在备注中指出需要用原片 1:1 核对的位置。
 
 在 `$job\ai-edit-plan.json` 写入 v1.0 方案。项目内 `examples/ai-edit-plan.example.json` 有完整样例，`python/portrait_edit/edit-plan.schema.json` 定义结构，`python/portrait_edit/develop-settings.json` 给出支持的滑块及范围。
 
 - 每组给出 `id`、`style_name`、`rationale`，说明选择该风格的画面依据。逐张使用清单中的完整 `source_path` 和 `preview_path`，覆盖全部照片。每组标记一张 `preview: true`。
 - `global_settings` 填 Lightroom 滑块的**最终绝对值**。从 `current_settings` 出发，例如当前曝光 +0.40 EV，想提亮 0.15 EV，应写 0.55。只写确实需要改动且原片支持的键。无须改动时可写 `{}`。渲染成片使用增量型白平衡滑块的最终读数，RAW 按清单记录的色温与色调读数判断。旧清单缺基线时，已有显影的照片宜重新导出。
-- 逐张检查 `facial_skin`、`iris_pupil`、`hair`、`background`。在 `local_adjustments` 记录目标、可操作的 `instruction`、数值 `settings` 和 `status: proposed_not_applied`。已有良好质感或区域不可见时，写明保留或跳过的依据，设置留空。补充 `confidence` 和 `notes`，标明需要人工查看的位置。
+- `notes` 第一行写该片首要问题或保留理由。后续行记录人工复核的位置和原因，包括需要 Photoshop 仿制、修补或重建纹理的细节。用 `confidence` 反映可见证据。
+- 逐张检查 `facial_skin`、`iris_pupil`、`hair`、`background`，需要时用 `subject` 定位眼窝或其他主体部位。把 `local_adjustments` 按对成片的影响排列。新建议用 `location` 定位人物及画面方位，`observation` 写可见迹象和参照，`instruction` 写操作顺序与需要避开的边界，`stop_when` 写回看原图时可判断的停手条件。状态为 `proposed_not_applied`。已有良好质感或区域不可见时，说明保留或跳过的理由，`settings` 用 `{}`。有可判断的数值时才填写相应的局部滑块。
 - 跨光线组分别决定风格，同组根据每张曝光、肤色与背景微调。省略不确定的全局参数，保留个体肤色、皮肤纹理和场景氛围。
 
 ## 审阅与应用

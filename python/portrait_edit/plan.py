@@ -18,6 +18,7 @@ BOUNDS = json.loads((RESOURCES / "develop-settings.json").read_text("utf-8"))["s
 SCHEMA = Draft202012Validator(json.loads((RESOURCES / "edit-plan.schema.json").read_text("utf-8")))
 CSV_FIELDS = ["revision", "source_path", "uuid", "catalog_id", "develop_stamp",
               "style_group", "representative", *BOUNDS]
+REVIEW_DETAILS = ("location", "observation", "stop_when")
 
 
 def load_json(path: str | Path) -> dict[str, Any]:
@@ -118,11 +119,13 @@ def validate_and_export(manifest_path: str | Path, plan_path: str | Path,
         write_report(stage / names["normalized_plan"], stage / names["report"])
         with (stage / names["local_adjustments"]).open("w", newline="", encoding="utf-8-sig") as f:
             writer = csv.writer(f)
-            writer.writerow(["source_path", "style_group", "target", "status", "instruction", "settings_json"])
+            writer.writerow(["source_path", "style_group", "target", "status", "instruction", "settings_json",
+                             *REVIEW_DETAILS])
             for item in plan["photos"]:
                 for local in item.get("local_adjustments", []):
                     writer.writerow([item["source_path"], item["style_group"], local["target"], local["status"],
-                                     local["instruction"], json.dumps(local.get("settings", {}), ensure_ascii=False)])
+                                     local["instruction"], json.dumps(local.get("settings", {}), ensure_ascii=False),
+                                     *(local.get(key, "") for key in REVIEW_DETAILS)])
         for kind in ("preview_csv", "apply_csv"):
             with (stage / names[kind]).open("w", newline="", encoding="utf-8-sig") as f:
                 writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)

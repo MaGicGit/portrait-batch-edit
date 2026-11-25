@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
   "created_at": "2026-11-24",
-  "global_style_summary": "Scene-aware natural outdoor portrait color. Preserve skin texture and natural ambient light.",
+  "global_style_summary": "自然保真的示例方案。两张假设照片同处门廊，转头后受光不同。实际作业按各张预览与当前滑块读数填写。",
   "style_groups": [
     {
       "id": "open-shade-01",
-      "style_name": "Open shade — neutral natural",
-      "lighting": "open shade",
-      "rationale": "Cool ambient cast; keep skin neutral and lift shadows gently."
+      "style_name": "门廊侧光",
+      "lighting": "画面左前方开口提供主光，阴影边缘柔和。",
+      "rationale": "两张的衣领颜色、颈部受光和背景亮度相近，可共享色彩方向。额头反光和眼部阴影随朝向变化，需要逐张判断。"
     }
   ],
   "photos": [
@@ -18,62 +18,111 @@
       "score": 92,
       "confidence": 0.88,
       "preview": true,
+      "notes": "第一眼被额头中央的一小块油光吸引，先收亮斑，保留两侧弧形渐变。\n同组对照中，头发、深色衣领和门廊暗部都略显压实。假定当前 Blacks2012 为 -10，本张将最终值写为 -6。\n人工复核：用原片 1:1 检查亮斑中心的纹理。若原始显影没有可恢复的细节，需要修补时在 Photoshop 从额头相邻同光皮肤取样。",
       "global_settings": {
-        "Exposure2012": 0.2,
-        "Contrast2012": 6,
-        "Highlights2012": -25,
-        "Shadows2012": 18,
-        "Whites2012": 5,
-        "Blacks2012": -8,
-        "Temperature": 5400,
-        "Tint": 5,
-        "Texture": 2,
-        "Clarity2012": 1,
-        "Vibrance": 8,
-        "Saturation": -2,
-        "SaturationAdjustmentOrange": -4,
-        "LuminanceAdjustmentOrange": 5,
-        "SaturationAdjustmentGreen": -12
+        "Blacks2012": -6
       },
       "local_adjustments": [
         {
           "target": "facial_skin",
           "status": "proposed_not_applied",
-          "instruction": "If a People > Facial Skin mask is available, reduce Texture slightly (about -5) while preserving pores; do not blur.",
+          "location": "额头中央，眉心上方",
+          "observation": "孤立亮点明显亮于同一受光面的皮肤，亮点周围仍有渐变。",
+          "instruction": "先限定亮点范围并羽化边缘，再轻收局部高光，避开眉峰。",
           "settings": {
-            "Texture": -5,
-            "Clarity": -2
-          }
+            "Highlights": -8
+          },
+          "stop_when": "回到全脸时油光不再抢眼，额头仍有受光峰值，没有平灰的补丁。"
         },
         {
           "target": "iris_pupil",
           "status": "proposed_not_applied",
-          "instruction": "Optional subtle Iris and Pupil mask: tiny exposure lift and restrained texture; avoid whitening the sclera.",
+          "location": "画面左侧眼睛的虹膜受光半边",
+          "observation": "眼睑和眼窝亮度自然，虹膜合焦且放射纹可辨，但纹理对比偏低。",
+          "instruction": "在虹膜受光半边轻增局部对比，排除瞳孔、眼白和原有反光。",
           "settings": {
-            "Exposure": 0.08,
-            "Texture": 5
-          }
+            "Contrast": 3
+          },
+          "stop_when": "缩回全脸仍是原有眼色，暗侧眼保留明暗差。"
         },
         {
           "target": "hair",
           "status": "proposed_not_applied",
-          "instruction": "Optional Hair mask: recover shadow detail gently without halos.",
-          "settings": {
-            "Shadows": 8,
-            "Texture": 5
-          }
+          "location": "额角至耳后的发缘",
+          "observation": "细短碎发顺着主光形成连续轮廓。",
+          "instruction": "保留现有短发。",
+          "settings": {},
+          "stop_when": "轮廓连续，发丝与背景仍有分离。"
         },
         {
           "target": "background",
           "status": "proposed_not_applied",
-          "instruction": "Optional Background mask: lower exposure slightly only if it competes with the subject.",
-          "settings": {
-            "Exposure": -0.15,
-            "Saturation": -5
-          }
+          "location": "人物画面右侧的门廊墙面",
+          "observation": "墙面亮度低于脸，靠近发梢处没有抢眼亮块。",
+          "instruction": "保留墙面亮度。",
+          "settings": {},
+          "stop_when": "整图第一视觉落点留在人物。"
         }
-      ],
-      "notes": "Example only. Reassess all values against the actual preview."
+      ]
+    },
+    {
+      "source_path": "D:/Photos/Shoot01/DSC00002.ARW",
+      "preview_path": "D:/LrAI/Shoot01/previews/photo_00002.jpg",
+      "style_group": "open-shade-01",
+      "score": 90,
+      "confidence": 0.84,
+      "preview": false,
+      "notes": "转头后，画面右侧眼窝连同上下眼睑落在眉骨阴影里，优先恢复眼睑分界。\n额头到颧骨的连续反光交代了脸形，保留这段亮面。",
+      "global_settings": {},
+      "local_adjustments": [
+        {
+          "target": "subject",
+          "status": "proposed_not_applied",
+          "location": "画面右侧眉骨下方，含上下眼睑",
+          "observation": "与同侧脸颊相比整片眼周下沉，左眼和额头曝光合适。",
+          "instruction": "用羽化画笔沿原眼窝阴影轻提，边缘渐退，避开眉毛和鼻影。",
+          "settings": {
+            "Exposure": 0.1
+          },
+          "stop_when": "眼睑边界可辨，右眼仍比受光侧暗，眼周没有亮圈。"
+        },
+        {
+          "target": "facial_skin",
+          "status": "proposed_not_applied",
+          "location": "受光侧额头延伸至颧骨的亮面",
+          "observation": "沿弧面连续渐退，和鼻影方向一致。",
+          "instruction": "保留塑形高光。",
+          "settings": {},
+          "stop_when": "额头到脸颊的转折仍然清楚。"
+        },
+        {
+          "target": "iris_pupil",
+          "status": "proposed_not_applied",
+          "location": "画面右侧虹膜",
+          "observation": "主要亮度差覆盖整个眼窝，虹膜没有独立异常。",
+          "instruction": "先回看眼窝调整的效果，保留原有眼神光。",
+          "settings": {},
+          "stop_when": "双眼仍反映同一主光方向。"
+        },
+        {
+          "target": "hair",
+          "status": "proposed_not_applied",
+          "location": "头顶逆光发缘",
+          "observation": "亮边连续，没有遮住眼睛。",
+          "instruction": "保留轮廓光。",
+          "settings": {},
+          "stop_when": "发梢自然融入背景。"
+        },
+        {
+          "target": "background",
+          "status": "proposed_not_applied",
+          "location": "颈肩后方的墙面",
+          "observation": "墙面均匀，与人物轮廓分界自然。",
+          "instruction": "保留背景。",
+          "settings": {},
+          "stop_when": "肩线与墙面交界自然。"
+        }
+      ]
     }
   ]
 }

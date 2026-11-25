@@ -1,28 +1,29 @@
-# Outdoor portrait editing policy
+# 人像修图手册
 
-## Priority order
-1. Preserve identity, facial proportions, natural skin texture, and believable color.
-2. Correct obvious exposure and white-balance issues.
-3. Establish a coherent scene-level color direction.
-4. Apply restrained per-photo refinements.
-5. Suggest local adjustments separately for human review.
+先看成片大小下最吸引视线的位置，再放大核实原因。Varis 的案例帮助判断问题来自照明、颜色还是明暗。Kelby 的案例用于确定具体部位、操作次序和修到什么程度。两篇分册都给出所用版本的书页和 PDF 页。使用手册时可直接从下面任一入口查阅。
 
-## Scene grouping
-Group photos using capture time, location metadata when available, and visual similarity. Do not combine direct sun, open shade, backlight, and golden-hour images into one edit group merely because they were taken in the same session.
+## 按拍摄场景查
 
-## Global editing guardrails
-- Exposure: usually within ±0.7 EV unless the image clearly requires more.
-- Highlights/Shadows/Whites/Blacks: moderate changes; avoid flattening the image.
-- Texture/Clarity: small changes only for global settings.
-- HSL: skin orange/red channels should be adjusted conservatively.
-- Saturation: avoid global oversaturation.
-- Sharpening/noise reduction: prefer camera/ISO-aware settings; do not invent aggressive values.
+| 画面 | 先判断什么 | 读哪一节 |
+| --- | --- | --- |
+| 阴天、窗边、敞开门廊 | 从鼻影和颊部渐变判断主光。检查垂发是否只遮住一侧眼颊。 | [侧光与遮挡影](lighting-and-skin.md#同一种现象在不同光线下如何处理) |
+| 直射日光、逆光或闪光补光 | 分别看受光面、脸部阴影和头肩轮廓光，比较高光是否交代体积。 | [主光与反光](lighting-and-skin.md#同一种现象在不同光线下如何处理) |
+| 黄金时段、室内外混光或靠彩色墙 | 核实灰卡是否与人物同光。暖光覆盖整个场景时保留时段特征。仅靠墙一侧脸颊染色时，比对该侧脸颈与同光下周围皮肤，用羽化选区减弱反色，避开嘴唇。脸颈衔接自然且两侧冷暖仍可辨时停止。 | [白平衡依据](lighting-and-skin.md#先在整张照片里找依据) · [局部修色](lighting-and-skin.md#把局部问题写到正确位置) |
+| 同组连拍、多人合影 | 把相同照明下的参考照作为起点，逐人、逐张检查转头、遮挡及原有肤色差异。记录画面方位与目标人物。 | [同光下的判断](lighting-and-skin.md#先在整张照片里找依据) |
+| 近景特写、日常人像或准备打印 | 比较整图与交付尺寸。可见的干扰决定时间花在眼窝、皮肤还是发丝上。 | [三个完整案例](portrait-details.md#从完整案例选择优先级) · [输出锐化](lighting-and-skin.md#代表照怎么验收) |
 
-## Local adjustment proposal targets
-- facial_skin: preserve pores and texture; avoid plastic skin.
-- iris_pupil: subtle detail and exposure; do not brighten sclera unnaturally.
-- hair: recover detail without creating halos.
-- background: reduce distraction while retaining believable depth and ambient light.
-- subject: subtle face/body exposure balance.
+## 按人物部位查
 
-Local proposals are not applied by the current plugin.
+| 部位 | 优先分辨 | 方法 |
+| --- | --- | --- |
+| 额头、鼻尖、颧骨 | 孤立油斑可局部收亮，沿曲面渐退的塑形反光应保留。 | [亮面走势](lighting-and-skin.md#同一种现象在不同光线下如何处理) · [额头亮斑处理](portrait-details.md#皮肤颈肩与脸部明暗) |
+| 面颊、发际、眼下和颈肩 | 突出的色斑、暂时性瑕疵、光线造成的沟影，分别涉及颜色、像素修补和明暗。 | [红斑与成熟皮肤](lighting-and-skin.md#把局部问题写到正确位置) · [瑕疵与颈肩](portrait-details.md#皮肤颈肩与脸部明暗) |
+| 眼窝、眼白和虹膜 | 眼睑与周围皮肤同暗时先看眼窝。只有合焦虹膜内的纹理发平时，再评估虹膜对比。 | [眼部处理与停手标准](portrait-details.md#眼窝眼白虹膜与眼神光) |
+| 发丝、唇齿、衣物 | 定位飞发跨过的材质，分清唇齿本色与局部偏色，检查衣料反光是否比眼睛更抢眼。 | [发丝、唇齿与衣物](portrait-details.md#头发嘴唇牙齿与衣物) |
+| 背景与人物边缘 | 若亮块吸引视线，限定背景调整，回看发梢、肩线和衣缘。轮廓自然且视线回到人物时停手。 | [边缘复核](lighting-and-skin.md#代表照怎么验收) |
+
+## 写入项目方案
+
+1. 以视觉相近、光线一致的照片分组。拍摄时间、地点可辅助判断。同一张脸上先校正影响全片的曝光与白平衡，再判断局部色差。全局曝光通常从当前值往目标方向微调，优先考虑 ±0.7 EV 内的变化。最终读数受项目滑块范围限制。高光与阴影保留光比，全局纹理、清晰度、橙红色和饱和度从轻。锐化与降噪结合可见细节和已有的 ISO 信息。
+2. 自然保真优先保留脸型、体形、年龄纹理、固有肤色和身份特征。全片已合适时可填写空的全局设置。局部按影响排序，逐条列出画面位置、可见依据、操作及停手条件。区域已合适就写明保留理由。
+3. Photoshop 的像素修补、图层与通道操作写入该片备注的后续行，标明位置及需要人工处理的原因。打印软打样与输出锐化要结合最终尺寸、纸张和设备。局部选区留给虚拟副本上的人工操作。
